@@ -10,20 +10,15 @@ char pasw[] = SECRET_PASS;
 
 int led = LED_BUILTIN;
 int status = WL_IDLE_STATUS;
+int id = 0;
+
+int row = id /12;
+int col = id %12;
+
+uint8_t one[8][12] = {};
 
 ArduinoLEDMatrix matrix;
 WiFiServer server(8888);
-
-uint8_t one[8][12] = {
-  {1,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0,0,0,0,0}
-};
 
 void setup() {
   Serial.begin(9600);
@@ -63,6 +58,44 @@ void loop() {
       Serial.print(".");
     }
     Serial.println("\nConnected!");
+  }
+
+  WiFiClient client = server.available();
+  if (client) {
+    String request = "";
+    while (client.connected() && client.available()) {
+      char c = client.read();
+      request += c;
+    }
+
+    Serial.println("Request:" + request);
+
+      //parse setid val x and y from first line
+
+    int id = -1; int val= -1;
+    int idIdX = request.indexOf("id=");
+    int valIdX = request.indexOf("val=");
+    
+    if (idIdX != -1 && valIdX != -1) {
+        id = request.substring(idIdX + 3).toInt();
+        val = request.substring(valIdX + 4).toInt();
+    }
+
+    if (id >= 0 && id <96 && (val == 0 ||val == 1)) {
+      int row = id / 12;
+      int col = id % 12;
+      one[row][col] = val;
+      matrix.renderBitmap(one, 8, 12);
+      Serial.print("LED "); Serial.print(id);
+      Serial.print(" --> "); Serial.println(val);
+    }
+    // actually freaking respond dipshit
+
+    client.println("HTTP/1.1 200 OK");
+    client.println("Access-Control-Allow-Origin: *");
+    client.println();
+    client.stop();
+
   }
   
 }
