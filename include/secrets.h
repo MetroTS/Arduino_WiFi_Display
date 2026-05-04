@@ -1,2 +1,2 @@
-#define SECRET_SSID = "yourwifi";
-#define SECRET_PASS = "yourpasw";
+#define SECRET_SSID "yourwifi"
+#define SECRET_PASS "yourpasw"
